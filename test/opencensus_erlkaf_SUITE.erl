@@ -4,9 +4,6 @@
 
 -compile([export_all]).
 
--define(UNTIL(X), (fun Until(I) when I =:= 10 -> erlang:error(fail);
-                       Until(I) -> case X of true -> ok; false -> timer:sleep(500), Until(I+1) end end)(0)).
-
 all() ->
     [stats_callback_test].
 

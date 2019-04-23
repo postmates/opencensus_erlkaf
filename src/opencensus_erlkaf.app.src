@@ -1,5 +1,5 @@
 {application, opencensus_erlkaf,
- [{description, "An OTP library"},
+ [{description, "Kafka statistics from erlkaf recorded by OpenCensus."},
   {vsn, "0.1.0"},
   {registered, []},
   {applications,

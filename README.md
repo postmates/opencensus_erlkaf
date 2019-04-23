@@ -30,3 +30,18 @@ Lastly, register the [OpenCensus Prometheus exporter](https://github.com/opencen
 ``` erlang
 prometheus_registry:register_collector(oc_stat_exporter_prometheus)
 ```
+
+### Run Tests
+
+Docker compose is used to bring up kafka and zookeeper for the tests to use:
+
+``` shell
+$ docker-compose up
+```
+
+Then run the common test suite:
+
+``` shell
+$ rebar3 ct
+```
+
