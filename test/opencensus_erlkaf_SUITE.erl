@@ -14,9 +14,7 @@ init_per_testcase(_, Config) ->
     application:set_env(opencensus, send_interval_ms, 10),
     application:ensure_all_started(opencensus),
 
-    opencensus_erlkaf:register_measures(),
-    Views = opencensus_erlkaf:default_views(),
-    [oc_stat_view:subscribe(View) || View <- Views],
+    opencensus_erlkaf:register_and_subscribe(),
 
     application:load(erlkaf),
     application:set_env(erlkaf, global_client_options, [{bootstrap_servers, "localhost:9092"},

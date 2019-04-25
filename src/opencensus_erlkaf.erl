@@ -3,6 +3,7 @@
 -export([stats_callback/2,
          delivery_report/2,
 
+         register_and_subscribe/0,
          register_measures/0,
          default_views/0]).
 
@@ -25,6 +26,11 @@ stats_callback(_ClientId, #{<<"type">> := Type,
 -spec delivery_report(ok | {error, any()}, #erlkaf_msg{}) -> ok.
 delivery_report(_DeliveryStatus, _Message) ->
     ok.
+
+register_and_subscribe() ->
+    opencensus_erlkaf:register_measures(),
+    Views = opencensus_erlkaf:default_views(),
+    [oc_stat_view:subscribe(View) || View <- Views].
 
 register_measures() ->
     [oc_stat_measure:new(Name, Description, Unit) || {Name, Description, Unit} <- measurements()].
