@@ -11,7 +11,7 @@ init_per_testcase(_, Config) ->
     application:load(opencensus),
     application:set_env(opencensus, stat, [{export_interval, 100},
                                            {exporters, [{?MODULE, self()}]}]),
-     application:set_env(opencensus, send_interval_ms, 10),
+    application:set_env(opencensus, send_interval_ms, 10),
     application:ensure_all_started(opencensus),
 
     opencensus_erlkaf:register_measures(),
@@ -32,21 +32,22 @@ end_per_testcase(_, _Config) ->
 
 stats_callback_test(_Config) ->
     ProducerConfig = [],
+    Topic = re:replace(base64:encode(crypto:strong_rand_bytes(10)),"\\W","",[global,{return,binary}]),
     ok = erlkaf:create_producer(client_producer, ProducerConfig),
-    ok = erlkaf:create_topic(client_producer, <<"topic-1">>, [{request_required_acks, 0}]),
+    ok = erlkaf:create_topic(client_producer, Topic, [{request_required_acks, 0}]),
 
     ClientId = client_consumer,
-    GroupId = <<"erlkaf_consumer">>,
+    GroupId = re:replace(base64:encode(crypto:strong_rand_bytes(10)),"\\W","",[global,{return,binary}]),
     ClientCfg = [],
-    TopicConf = [{auto_offset_reset, smallest}],
-    ok = erlkaf:create_consumer_group(ClientId, GroupId, [<<"topic-1">>],
+    TopicConf = [], %% [{auto_offset_reset, beginning}],
+    ok = erlkaf:create_consumer_group(ClientId, GroupId, [Topic],
                                       ClientCfg, TopicConf, oc_erlkaf_test_consumer, []),
 
     NumToProduce = 30,
     lists:foreach(fun(_) ->
-                      ok = erlkaf:produce(client_producer, <<"topic-1">>,
+                      ok = erlkaf:produce(client_producer, Topic,
                                           <<"key-1">>, <<"value-1">>),
-                      timer:sleep(50)
+                          timer:sleep(50)
                   end, lists:seq(1, NumToProduce)),
 
     collect(NumToProduce).
@@ -54,24 +55,11 @@ stats_callback_test(_Config) ->
 %%
 
 collect(NumToCollect) ->
-    collect(NumToCollect, 0).
-
-collect(0, _Attempts) ->
-    done;
-collect(_, 50) ->
-    ct:fail(timeout);
-collect(NumToCollect, Attempts) ->
     receive
         {view_data, V} ->
-            case [Cnt || #{name := "kafka/topic/batchcnt/cnt",
-                           data := #{rows := [#{value := Cnt} | _]}} <- V] of
-                [Cnt] ->
-                    timer:sleep(200),
-                    collect(NumToCollect - Cnt, Attempts+1);
-                _ ->
-                    timer:sleep(200),
-                    collect(NumToCollect, Attempts+1)
-            end
+            AllViewNames = lists:sort([Name || #{name := Name} <- opencensus_erlkaf:default_views()]),
+            ReportedViews = lists:sort([Name || #{name := Name} <- V]),
+            ?assertEqual(AllViewNames, ReportedViews)
     end.
 
 
