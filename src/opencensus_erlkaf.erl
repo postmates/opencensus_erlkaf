@@ -8,7 +8,12 @@
          default_views/0]).
 
 -include_lib("erlkaf/include/erlkaf.hrl").
+
+-ifdef('OTP_RELEASE').
 -include_lib("kernel/include/logger.hrl").
+-else.
+-define(LOG_ERROR(F, A), error_logger:error_msg(F, A)).
+-endif.
 
 %% Based on the stats found here:
 %% https://github.com/postmates/pmpy/blob/master/pmpy/kafka/stats.py
